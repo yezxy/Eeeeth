@@ -1,0 +1,59 @@
+-- Define variables to track the locked player, lock status, and target aim
+local lockedPlayer = nil
+local isLocked = false
+local targetAimIndex = 1
+local bodyParts = {"Head", "UpperTorso", "LowerTorso", "LeftHand", "RightHand", "LeftFoot", "RightFoot"} -- List of body parts to aim at
+
+-- Define the flick function with animation
+local function flickToPlayer(player, target)
+    -- Code to flick to the specified player and aim at the target position
+    -- This could involve moving the camera or character to focus on the player and aim at the target
+    
+    -- Get the target body part position
+    local targetPosition = player.Character[target].Position
+    
+    -- Get the current position of the flickbot
+    local flickbotPosition = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+    
+    -- Calculate the direction to flick towards (upwards towards the head)
+    local flickDirection = (targetPosition - flickbotPosition).unit * Vector3.new(1, 2, 1) -- Adjust the y component for upward flick
+    
+    -- Calculate the flick end position
+    local flickEndPosition = flickbotPosition + flickDirection
+    
+    -- Tween the flickbot's position to the flick end position over the specified duration (1 second)
+    game.TweenService:Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = flickEndPosition}):Play()
+    
+    print("Flicking to player: " .. player.Name .. " and aiming at target body part: " .. target)
+end
+
+-- Listen for player character added event
+game.Players.PlayerAdded:Connect(function(player)
+    -- Listen for player's character added event
+    player.CharacterAdded:Connect(function(character)
+        -- Listen for when the character jumps
+        character.Humanoid.Jumping:Connect(function()
+            -- When the player jumps, wait 999 milliseconds before flicking to the player if locked and aim at the target body part
+            if isLocked then
+                local targetBodyPart = bodyParts[targetAimIndex]
+                wait(0.999) -- Wait for 999 milliseconds
+                flickToPlayer(lockedPlayer, targetBodyPart)
+            end
+        end)
+    end)
+end)
+
+-- Listen for when the "Q" key is pressed
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Q then
+        -- Toggle lock status
+        isLocked = not isLocked
+        
+        -- If locked, set the locked player to the closest player
+        if isLocked then
+            local closestPlayer = nil
+            local shortestDistance = math.huge
+            
+            -- Find the closest player to the flickbot
+            for _, player in pairs(game.Players:GetPlayers()) do
+                local distance = (player.Character.HumanoidRootPart.Position - game
